@@ -29,3 +29,4 @@ jobs:
           publish_dir: ./build/wwwroot
           publish_branch: gh-pages
           artifact_name: auto-tracking-pages
+          force_orphan: true
