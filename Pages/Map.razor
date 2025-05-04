@@ -6,6 +6,9 @@
 @using AutoTracking.Services
 @inject IJSRuntime JS
 @inject TrackingService Tracking
+@inject ReverseGeocodingService Geocoder
+@inject ExportService Exporter
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <PageTitle>AutoTracking - Kaart</PageTitle>
 
@@ -15,13 +18,14 @@
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ToggleTracking">@StartButtonText</MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="EndRoute">Einde route</MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ExportRoutes">Export</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="DownloadRoutes">Download CSV</MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="GoToSettings">Settings</MudButton>
     </MudStack>
 </MudPaper>
 
 @code {
     private System.Threading.Timer? _timer;
-    private int intervalSeconds = 5; // default, kan uit settings komen
+    private int intervalSeconds = 5; // default, wordt geladen uit settings
     private string StartButtonText => Tracking.IsTracking ? "Actief" : "Gepauseerd";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -30,6 +34,10 @@
         {
             await JS.InvokeVoidAsync("initMap");
             Tracking.OnTrackingChanged += StateHasChanged;
+            // Frequentie ophalen uit settings
+            var freq = await JS.InvokeAsync<int?>("blazorGetFrequency");
+            if (freq.HasValue && freq.Value > 0)
+                intervalSeconds = freq.Value;
         }
     }
 
@@ -53,13 +61,21 @@
         var pos = await JS.InvokeAsync<GeolocationResult>("getCurrentPosition");
         if (pos != null)
         {
+            string? street = null;
+            string? city = null;
+            try
+            {
+                (street, city) = await Geocoder.GetAddressAsync(pos.Latitude, pos.Longitude);
+            }
+            catch { /* reverse geocoding is best effort */ }
             var point = new TrackingPoint
             {
                 RouteNumber = Tracking.CurrentRouteNumber,
                 Latitude = pos.Latitude,
                 Longitude = pos.Longitude,
                 Timestamp = DateTime.Now,
-                // Street/City kan via reverse geocoding API
+                Street = street,
+                City = city
             };
             Tracking.AddPoint(point);
             await JS.InvokeVoidAsync("addRoutePoint", pos.Latitude, pos.Longitude);
@@ -74,9 +90,35 @@
         StateHasChanged();
     }
 
-    private void ExportRoutes()
+    private async void ExportRoutes()
     {
-        // Export logic volgt
+        // Haal e-mail uit settings
+        var email = await LocalStorage.GetItemAsync<string>("settings_email");
+        var csv = await Exporter.ExportUnexportedRoutesAsCsvAsync();
+        if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(csv))
+        {
+            // Probeer mail te openen met mailto-link (client-side, geen backend)
+            var subject = Uri.EscapeDataString("AutoTracking export");
+            var body = Uri.EscapeDataString(csv);
+            var mailto = $"mailto:{email}?subject={subject}&body={body}";
+            await JS.InvokeVoidAsync("open", mailto, "_blank");
+        }
+        else
+        {
+            // Toon melding (optioneel: MudBlazor Snackbar)
+        }
+    }
+
+    private async void DownloadRoutes()
+    {
+        var csv = await Exporter.ExportUnexportedRoutesAsCsvAsync();
+        if (!string.IsNullOrWhiteSpace(csv))
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"routes_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            await JS.InvokeVoidAsync("blazorDownloadFile", fileName, base64);
+        }
     }
 
     private void GoToSettings()

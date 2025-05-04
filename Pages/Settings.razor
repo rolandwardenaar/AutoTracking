@@ -1,0 +1,47 @@
+// use context7
+@page "/settings"
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@using MudBlazor
+
+<PageTitle>Instellingen</PageTitle>
+
+<MudPaper Class="pa-4" Style="max-width:500px;margin:auto;">
+    <MudText Typo="Typo.h5">Instellingen</MudText>
+    <MudForm @ref="form">
+        <MudTextField @bind-Value="email" Label="E-mail voor export" Variant="Outlined" Required="true" />
+        <MudNumericField @bind-Value="frequency" Label="Frequentie (seconden)" Variant="Outlined" Min="1" Max="60" Required="true" />
+        <MudButton OnClick="Save" Variant="Filled" Color="Primary" Class="mt-4">Opslaan</MudButton>
+        @if (saved)
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-2">Instellingen opgeslagen!</MudAlert>
+        }
+    </MudForm>
+</MudPaper>
+
+@code {
+    private MudForm? form;
+    private string email = string.Empty;
+    private int frequency = 5;
+    private bool saved = false;
+    private const string EmailKey = "settings_email";
+    private const string FreqKey = "settings_frequency";
+
+    protected override async Task OnInitializedAsync()
+    {
+        email = await LocalStorage.GetItemAsync<string>(EmailKey) ?? string.Empty;
+        frequency = await LocalStorage.GetItemAsync<int?>(FreqKey) ?? 5;
+    }
+
+    private async Task Save()
+    {
+        await form?.Validate();
+        if (form?.IsValid == true)
+        {
+            await LocalStorage.SetItemAsync(EmailKey, email);
+            await LocalStorage.SetItemAsync(FreqKey, frequency);
+            saved = true;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,3 +1,18 @@
+// Download bestand vanuit Blazor (CSV export)
+window.blazorDownloadFile = function (fileName, base64) {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = "data:text/csv;base64," + base64;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+// Haal frequentie uit localStorage (voor Blazor interop)
+window.blazorGetFrequency = function() {
+    const val = window.localStorage.getItem('settings_frequency');
+    if (val) return parseInt(val);
+    return 5;
+}
 // use context7
 // Initialiseer een OpenStreetMap kaart met Leaflet.js en beheer route/positie
 window.initMap = () => {
