@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-dotnettools.csharp",
+  "csharp.format.enable": true,
+  "csharp.referencesCodeLens.enabled": true,
+  "csharp.inlayHints.parameters.enabled": true,
+  "csharp.inlayHints.types.enabled": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  }
+}
