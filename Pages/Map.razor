@@ -1,0 +1,53 @@
+// use context7
+@page "/map"
+@using Microsoft.JSInterop
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JS
+
+<PageTitle>AutoTracking - Kaart</PageTitle>
+
+<MudPaper Class="pa-4" Style="height: 80vh;">
+    <div id="map" style="height:100%; width:100%; min-height:400px;"></div>
+    <MudStack Direction="Row" Spacing="2" Class="mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ToggleTracking">@StartButtonText</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="EndRoute">Einde route</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ExportRoutes">Export</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="GoToSettings">Settings</MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool trackingActive = false;
+    private string StartButtonText => trackingActive ? "Actief" : "Gepauseerd";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initMap");
+        }
+    }
+
+    private void ToggleTracking()
+    {
+        trackingActive = !trackingActive;
+        // Start/stop tracking logic volgt
+    }
+
+    private void EndRoute()
+    {
+        trackingActive = false;
+        // Route wissen van kaart logic volgt
+    }
+
+    private void ExportRoutes()
+    {
+        // Export logic volgt
+    }
+
+    private void GoToSettings()
+    {
+        // Navigatie naar settings pagina
+    }
+}
