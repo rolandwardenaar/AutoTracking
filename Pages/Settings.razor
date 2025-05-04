@@ -9,9 +9,9 @@
 <MudPaper Class="pa-4" Style="max-width:500px;margin:auto;">
     <MudText Typo="Typo.h5">Instellingen</MudText>
     <MudForm @ref="form">
-        <MudTextField @bind-Value="email" Label="E-mail voor export" Variant="Outlined" Required="true" />
-        <MudNumericField @bind-Value="frequency" Label="Frequentie (seconden)" Variant="Outlined" Min="1" Max="60" Required="true" />
-        <MudButton OnClick="Save" Variant="Filled" Color="Primary" Class="mt-4">Opslaan</MudButton>
+        <MudTextField @bind-Value="email" Label="E-mail voor export" Variant="Variant.Outlined" Required="true" />
+        <MudNumericField @bind-Value="frequency" Label="Frequentie (seconden)" Variant="Variant.Outlined" Min="1" Max="60" Required="true" />
+        <MudButton OnClick="Save" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">Opslaan</MudButton>
         @if (saved)
         {
             <MudAlert Severity="Severity.Success" Class="mt-2">Instellingen opgeslagen!</MudAlert>
