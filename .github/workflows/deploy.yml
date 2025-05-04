@@ -26,6 +26,9 @@ jobs:
         run: |
           sed -i 's|<base href="/">|<base href="/AutoTracking/">|' build/wwwroot/index.html
 
+      - name: Debug index.html content
+        run: cat build/wwwroot/index.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
