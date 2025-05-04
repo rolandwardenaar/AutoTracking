@@ -25,7 +25,7 @@
 @code {
     private System.Threading.Timer? _timer;
     private int intervalSeconds = 5; // default, wordt geladen uit settings
-    private string StartButtonText => Tracking.IsTracking ? "Actief" : "Gepauseerd";
+    private string StartButtonText => Tracking.IsTracking ? $"Actief ({Tracking.PointCount})" : "Gepauseerd";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -37,6 +37,41 @@
             var freq = await JS.InvokeAsync<int?>("blazorGetFrequency");
             if (freq.HasValue && freq.Value > 0)
                 intervalSeconds = freq.Value;
+        }
+    }
+
+    private async Task AddCurrentPositionAsync()
+    {
+        var pos = await JS.InvokeAsync<GeolocationResult>("getCurrentPosition");
+        if (pos != null)
+        {
+            string? street = null;
+            string? city = null;
+            try
+            {
+                (street, city) = await Geocoder.GetAddressAsync(pos.Latitude, pos.Longitude);
+            }
+            catch { /* reverse geocoding is best effort */ }
+
+            var lastPoint = Tracking.GetLastPoint();
+            if (lastPoint != null && Tracking.CalculateDistance(lastPoint, pos) < 10)
+            {
+                lastPoint.Timestamp = DateTime.Now;
+            }
+            else
+            {
+                var point = new TrackingPoint
+                {
+                    RouteNumber = Tracking.CurrentRouteNumber,
+                    Latitude = pos.Latitude,
+                    Longitude = pos.Longitude,
+                    Timestamp = DateTime.Now,
+                    Street = street,
+                    City = city
+                };
+                Tracking.AddPoint(point);
+                await JS.InvokeVoidAsync("addRoutePoint", pos.Latitude, pos.Longitude);
+            }
         }
     }
 
@@ -53,32 +88,6 @@
             _timer?.Dispose();
         }
         StateHasChanged();
-    }
-
-    private async Task AddCurrentPositionAsync()
-    {
-        var pos = await JS.InvokeAsync<GeolocationResult>("getCurrentPosition");
-        if (pos != null)
-        {
-            string? street = null;
-            string? city = null;
-            try
-            {
-                (street, city) = await Geocoder.GetAddressAsync(pos.Latitude, pos.Longitude);
-            }
-            catch { /* reverse geocoding is best effort */ }
-            var point = new TrackingPoint
-            {
-                RouteNumber = Tracking.CurrentRouteNumber,
-                Latitude = pos.Latitude,
-                Longitude = pos.Longitude,
-                Timestamp = DateTime.Now,
-                Street = street,
-                City = city
-            };
-            Tracking.AddPoint(point);
-            await JS.InvokeVoidAsync("addRoutePoint", pos.Latitude, pos.Longitude);
-        }
     }
 
     private async void EndRoute()
