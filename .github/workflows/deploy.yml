@@ -22,6 +22,10 @@ jobs:
       - name: Build
         run: dotnet publish -c Release -o build
 
+      - name: Update base-tag in index.html for GitHub Pages
+        run: |
+          sed -i 's|<base href="/">|<base href="/AutoTracking/">|' wwwroot/index.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
