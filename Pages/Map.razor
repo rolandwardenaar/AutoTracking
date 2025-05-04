@@ -2,6 +2,7 @@
 @using Microsoft.JSInterop
 @using MudBlazor
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 @using AutoTracking.Services
 @inject IJSRuntime JS
 @inject TrackingService Tracking
@@ -54,7 +55,7 @@
             catch { /* reverse geocoding is best effort */ }
 
             var lastPoint = Tracking.GetLastPoint();
-            if (lastPoint != null && Tracking.CalculateDistance(lastPoint, pos) < 10)
+            if (lastPoint != null && TrackingService.CalculateDistance(lastPoint.Latitude, lastPoint.Longitude, pos.Latitude, pos.Longitude) < 10)
             {
                 lastPoint.Timestamp = DateTime.Now;
             }

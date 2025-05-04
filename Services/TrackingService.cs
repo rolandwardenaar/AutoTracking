@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -88,7 +87,14 @@ namespace AutoTracking.Services
             OnTrackingChanged?.Invoke();
         }
 
-        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        public int PointCount => CurrentRoute.Count;
+
+        public TrackingPoint? GetLastPoint()
+        {
+            return CurrentRoute.Count > 0 ? CurrentRoute[^1] : null;
+        }
+
+        public static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
             // Haversine formula
             var R = 6371.0; // km
