@@ -3,7 +3,9 @@
 @using Microsoft.JSInterop
 @using MudBlazor
 @using Microsoft.AspNetCore.Components
+@using AutoTracking.Services
 @inject IJSRuntime JS
+@inject TrackingService Tracking
 
 <PageTitle>AutoTracking - Kaart</PageTitle>
 
@@ -18,27 +20,58 @@
 </MudPaper>
 
 @code {
-    private bool trackingActive = false;
-    private string StartButtonText => trackingActive ? "Actief" : "Gepauseerd";
+    private System.Threading.Timer? _timer;
+    private int intervalSeconds = 5; // default, kan uit settings komen
+    private string StartButtonText => Tracking.IsTracking ? "Actief" : "Gepauseerd";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initMap");
+            Tracking.OnTrackingChanged += StateHasChanged;
         }
     }
 
-    private void ToggleTracking()
+    private async void ToggleTracking()
     {
-        trackingActive = !trackingActive;
-        // Start/stop tracking logic volgt
+        if (!Tracking.IsTracking)
+        {
+            await Tracking.StartTrackingAsync();
+            _timer = new System.Threading.Timer(async _ => await AddCurrentPositionAsync(), null, 0, intervalSeconds * 1000);
+        }
+        else
+        {
+            Tracking.PauseTracking();
+            _timer?.Dispose();
+        }
+        StateHasChanged();
     }
 
-    private void EndRoute()
+    private async Task AddCurrentPositionAsync()
     {
-        trackingActive = false;
-        // Route wissen van kaart logic volgt
+        var pos = await JS.InvokeAsync<GeolocationResult>("getCurrentPosition");
+        if (pos != null)
+        {
+            var point = new TrackingPoint
+            {
+                RouteNumber = Tracking.CurrentRouteNumber,
+                Latitude = pos.Latitude,
+                Longitude = pos.Longitude,
+                Timestamp = DateTime.Now,
+                // Street/City kan via reverse geocoding API
+            };
+            Tracking.AddPoint(point);
+            await JS.InvokeVoidAsync("addRoutePoint", pos.Latitude, pos.Longitude);
+        }
+    }
+
+    private async void EndRoute()
+    {
+        _timer?.Dispose();
+        await Tracking.EndRouteAsync();
+        await JS.InvokeVoidAsync("clearRoute");
+        StateHasChanged();
     }
 
     private void ExportRoutes()
@@ -49,5 +82,11 @@
     private void GoToSettings()
     {
         // Navigatie naar settings pagina
+    }
+
+    public class GeolocationResult
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }
