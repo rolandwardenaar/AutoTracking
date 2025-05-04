@@ -13,7 +13,7 @@ window.blazorGetFrequency = function() {
     if (val) return parseInt(val);
     return 5;
 }
-// use context7
+
 // Initialiseer een OpenStreetMap kaart met Leaflet.js en beheer route/positie
 window.initMap = () => {
     if (window.L) {

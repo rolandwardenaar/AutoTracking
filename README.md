@@ -37,7 +37,7 @@ Een moderne, single page Blazor WebAssembly-applicatie voor het bijhouden en exp
 3. **MCP instructie**:  
    Voeg bovenaan elk codebestand toe:  
    ```csharp
-   // use context7
+   
    ```
 
 4. **Starten**:
