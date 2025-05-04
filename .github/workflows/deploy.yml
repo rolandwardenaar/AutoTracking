@@ -28,3 +28,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/wwwroot
           publish_branch: gh-pages
+          artifact_name: auto-tracking-pages
