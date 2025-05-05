@@ -2,7 +2,9 @@ name: Deploy Blazor WebAssembly to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,36 +16,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8.0 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore AutoTracking.csproj
 
-      - name: Build
-        run: dotnet publish -c Release -o build
+      - name: Build and publish Blazor WebAssembly app
+        run: dotnet publish AutoTracking.csproj -c Release -o release
 
       - name: Update base-tag in index.html for GitHub Pages
         run: |
-          sed -i 's|<base href="/">|<base href="/AutoTracking/">|' build/wwwroot/index.html
-
-      - name: Debug index.html content
-        run: cat build/wwwroot/index.html
+          sed -i 's|<base href="/" />|<base href="/AutoTracking/" />|' release/wwwroot/index.html
 
       - name: Add .nojekyll file
         run: |
-          touch build/wwwroot/.nojekyll
+          touch release/wwwroot/.nojekyll
 
       - name: Create 404.html for SPA routing
         run: |
-          cp build/wwwroot/index.html build/wwwroot/404.html
+          cp release/wwwroot/index.html release/wwwroot/404.html
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/wwwroot
+          publish_dir: release/wwwroot
           publish_branch: gh-pages
           force_orphan: true
